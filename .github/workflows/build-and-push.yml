@@ -313,7 +313,7 @@ jobs:
 
 
           # Current GitHub username
-          username: manojreddythumma9734
+          username: Manojreddythumma9734
 
 
           # Auto-generated GitHub token
@@ -349,9 +349,9 @@ jobs:
           # prime360novac-service-registry:latest
           # ------------------------------------------------
           docker build \
-            -t ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:latest \
-            -t ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:${{ github.sha }} \
-            ./${{ matrix.application }}
+            -t ghcr.io/manojreddythumma9734/prime360novac-${{ matrix.application }}:latest \
+            -t ghcr.io/manojreddythumma9734/prime360novac-${{ matrix.application }}:${{ github.sha }} \
+            ./${{ matrix.application })
 
 
 
@@ -374,12 +374,12 @@ jobs:
 
           # Push latest image
           docker push \
-            ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:latest
+            ghcr.io/manojreddythumma9734/prime360novac-${{ matrix.application }}:latest
 
 
           # Push commit SHA image
           docker push \
-            ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:${{ github.sha }}
+            ghcr.io/manojreddythumma9734/prime360novac-${{ matrix.application }}:${{ github.sha }}
 
 
           echo "======================================="
