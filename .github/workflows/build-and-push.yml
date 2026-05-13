@@ -1,0 +1,380 @@
+# =========================================================
+# WORKFLOW NAME
+# =========================================================
+name: Build Changed Applications
+
+
+
+# =========================================================
+# WORKFLOW PERMISSIONS
+#
+# contents: read
+#   → Allows workflow to clone repository
+#
+# packages: write
+#   → Allows workflow to push Docker images to GHCR
+# =========================================================
+permissions:
+  contents: read
+  packages: write
+
+
+
+# =========================================================
+# WORKFLOW TRIGGERS
+# =========================================================
+on:
+
+  # Trigger workflow on code push
+  push:
+
+    # Run only for these branches
+    branches:
+      - main
+      - dev
+
+
+  # Allow manual execution from GitHub UI
+  workflow_dispatch:
+
+
+
+
+# =========================================================
+# JOBS
+# =========================================================
+jobs:
+
+
+
+  # =======================================================
+  # JOB 1 : DETECT CHANGED APPLICATIONS
+  # =======================================================
+  detect-applications:
+
+    # Job display name
+    name: Detect Changed Applications
+
+
+    # Create temporary Ubuntu VM
+    runs-on: ubuntu-latest
+
+
+    # Export job outputs
+    outputs:
+
+      # Make applications list available
+      # to next jobs
+      applications: ${{ steps.detect.outputs.applications }}
+
+
+    # Sequential steps inside same VM
+    steps:
+
+
+
+      # ---------------------------------------------------
+      # STEP 1 : CHECKOUT REPOSITORY
+      # ---------------------------------------------------
+      - name: Checkout Repository
+
+        # Clone repository into runner VM
+        uses: actions/checkout@v4
+
+
+
+
+      # ---------------------------------------------------
+      # STEP 2 : DETECT CHANGED FOLDERS
+      # ---------------------------------------------------
+      - name: Detect Changed Application Folders
+
+        # Step ID
+        id: detect
+
+        # Use bash shell
+        shell: bash
+
+        # Execute commands
+        run: |
+
+          echo "======================================="
+          echo "Detecting Changed Application Folders"
+          echo "======================================="
+
+
+          # ------------------------------------------------
+          # Get changed files between:
+          #
+          # HEAD~1 = previous commit
+          # HEAD   = current commit
+          # ------------------------------------------------
+          #
+          # Example:
+          #
+          # service-registry/User.java
+          # config-server/pom.xml
+          # ------------------------------------------------
+          #
+          # cut -d/ -f1
+          #   → extract first folder name
+          #
+          # sort -u
+          #   → remove duplicates
+          #
+          # jq
+          #   → convert to JSON array
+          # ------------------------------------------------
+          APPLICATIONS=$(git diff --name-only HEAD~1 HEAD \
+            | cut -d/ -f1 \
+            | sort -u \
+            | jq -R -s -c 'split("\n")[:-1]')
+
+
+          echo "Detected Applications:"
+          echo $APPLICATIONS
+
+
+          # ------------------------------------------------
+          # Export output variable
+          #
+          # Available later as:
+          #
+          # needs.detect-applications.outputs.applications
+          # ------------------------------------------------
+          echo "applications=$APPLICATIONS" >> $GITHUB_OUTPUT
+
+
+
+
+
+  # =======================================================
+  # JOB 2 : BUILD AND PUSH IMAGES
+  # =======================================================
+  build-and-push:
+
+    # Job display name
+    name: Build And Push Docker Images
+
+
+    # This job waits for detect-applications
+    needs: detect-applications
+
+
+    # Create temporary Ubuntu VM
+    runs-on: ubuntu-latest
+
+
+    # -----------------------------------------------------
+    # Run job only if applications list is NOT empty
+    #
+    # Example:
+    #
+    # [] → skip
+    #
+    # ["config-server"] → run
+    # -----------------------------------------------------
+    if: ${{ needs.detect-applications.outputs.applications != '[]' }}
+
+
+
+
+    # =====================================================
+    # MATRIX STRATEGY
+    #
+    # Creates parallel jobs dynamically
+    #
+    # Example:
+    #
+    # [
+    #   "service-registry",
+    #   "config-server",
+    #   "data-converter"
+    # ]
+    #
+    # Creates:
+    #
+    # VM 1 → service-registry
+    # VM 2 → config-server
+    # VM 3 → data-converter
+    #
+    # ALL RUN IN PARALLEL
+    # =====================================================
+    strategy:
+
+      matrix:
+
+        application: ${{ fromJson(needs.detect-applications.outputs.applications) }}
+
+
+
+
+
+
+    # =====================================================
+    # STEPS INSIDE MATRIX JOB
+    # =====================================================
+    steps:
+
+
+
+      # ---------------------------------------------------
+      # STEP 1 : CHECKOUT REPOSITORY
+      #
+      # IMPORTANT:
+      #
+      # Every matrix job gets NEW VM
+      #
+      # So checkout required again
+      # ---------------------------------------------------
+      - name: Checkout Repository
+
+        uses: actions/checkout@v4
+
+
+
+
+
+      # ---------------------------------------------------
+      # STEP 2 : SETUP JAVA
+      # ---------------------------------------------------
+      - name: Setup Java
+
+        uses: actions/setup-java@v4
+
+        with:
+
+          # Java distribution
+          distribution: temurin
+
+          # Install Java 17
+          java-version: 17
+
+
+
+
+
+      # ---------------------------------------------------
+      # STEP 3 : BUILD JAR
+      # ---------------------------------------------------
+      - name: Build JAR
+
+        shell: bash
+
+        run: |
+
+          echo "======================================="
+          echo "Building Application:"
+          echo "${{ matrix.application }}"
+          echo "======================================="
+
+
+          # Move into application folder
+          #
+          # Example:
+          # cd service-registry
+          cd ${{ matrix.application }}
+
+
+          # Build Maven JAR
+          #
+          # clean
+          #   → remove old target folder
+          #
+          # package
+          #   → create JAR
+          #
+          # -DskipTests
+          #   → skip tests
+          mvn clean package -DskipTests
+
+
+
+
+
+      # ---------------------------------------------------
+      # STEP 4 : LOGIN TO GITHUB CONTAINER REGISTRY
+      # ---------------------------------------------------
+      - name: Login to GitHub Container Registry
+
+        uses: docker/login-action@v3
+
+        with:
+
+          # GitHub Container Registry URL
+          registry: ghcr.io
+
+
+          # Current GitHub username
+          username: ${{ github.actor }}
+
+
+          # Auto-generated GitHub token
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+
+
+
+
+      # ---------------------------------------------------
+      # STEP 5 : BUILD DOCKER IMAGE
+      # ---------------------------------------------------
+      - name: Build Docker Image
+
+        shell: bash
+
+        run: |
+
+          echo "======================================="
+          echo "Building Docker Image"
+          echo "======================================="
+
+
+          # ------------------------------------------------
+          # Docker image format:
+          #
+          # ghcr.io/<github-user>/<project>-<application>
+          #
+          # Example:
+          #
+          # ghcr.io/manojreddythumma9734/
+          # prime360novac-service-registry:latest
+          # ------------------------------------------------
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:latest \
+            -t ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:${{ github.sha }} \
+            ./${{ matrix.application }}
+
+
+
+
+
+
+      # ---------------------------------------------------
+      # STEP 6 : PUSH DOCKER IMAGE
+      # ---------------------------------------------------
+      - name: Push Docker Image
+
+        shell: bash
+
+        run: |
+
+          echo "======================================="
+          echo "Pushing Docker Images"
+          echo "======================================="
+
+
+          # Push latest image
+          docker push \
+            ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:latest
+
+
+          # Push commit SHA image
+          docker push \
+            ghcr.io/${{ github.repository_owner }}/prime360novac-${{ matrix.application }}:${{ github.sha }}
+
+
+          echo "======================================="
+          echo "Docker Push Completed"
+          echo "======================================="
