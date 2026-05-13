@@ -86,7 +86,7 @@ jobs:
     #
     # Required for:
     # git diff HEAD~1 HEAD
-        fetch-depth: 0
+          fetch-depth: 0
 
 
 
