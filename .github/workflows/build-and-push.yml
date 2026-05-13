@@ -351,7 +351,7 @@ jobs:
           docker build \
             -t ghcr.io/manojreddythumma9734/prime360novac-${{ matrix.application }}:latest \
             -t ghcr.io/manojreddythumma9734/prime360novac-${{ matrix.application }}:${{ github.sha }} \
-            ./${{ matrix.application })
+            ./${{ matrix.application }}
 
 
 
