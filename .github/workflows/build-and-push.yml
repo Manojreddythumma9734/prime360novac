@@ -31,7 +31,7 @@ on:
     # Run only for these branches
     branches:
       - main
-      - dev
+      - services
 
 
   # Allow manual execution from GitHub UI
