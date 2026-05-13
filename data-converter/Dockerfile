@@ -7,8 +7,7 @@ ENV TZ=Asia/Kolkata
 # Set working directory
 WORKDIR /app
 
-COPY config-3.0.jar /app/config-3.0.jar
-COPY config/ /app/config
+COPY . .
 
 EXPOSE 2458
 
