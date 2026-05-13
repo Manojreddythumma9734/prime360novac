@@ -80,7 +80,13 @@ jobs:
 
         # Clone repository into runner VM
         uses: actions/checkout@v4
+        with:
 
+    # Fetch full git history
+    #
+    # Required for:
+    # git diff HEAD~1 HEAD
+        fetch-depth: 0
 
 
 
