@@ -1,0 +1,147 @@
+---
+spring:
+  config:
+    import: optional:configserver:http://localhost:2689
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: false
+      routes:
+        - id: ms_sb_uam
+          uri: lb://uam
+          predicates:
+            - Path=/uam/**
+          filters:
+            - AuthenticationFilter
+        - id: agent
+          uri: lb://agent
+          predicates:
+            - Path=/agent/**
+          filters:
+            - AuthenticationFilter
+        - id: ms_sb_client_api
+          uri: lb://client
+          predicates:
+            - Path=/ca/**
+          filters:
+            - AuthenticationFilter
+        - id: primehof
+          uri: lb://primehof
+          predicates:
+            - Path=/hof/**
+          filters:
+            - AuthenticationFilter
+        - id: clip_api
+          uri: lb://primeclipapi
+          predicates:
+            - Path=/clipApi/**
+          filters:
+            - AuthenticationFilter
+        - id: bpmnova
+          uri: lb://bpmnova
+          predicates:
+            - Path=/router/**
+          filters:
+            - AuthenticationFilter
+        - id: clustering
+          uri: lb://clustering
+          predicates:
+            - Path=/clustering/**
+          filters:
+            - AuthenticationFilter
+        - id: primeapi
+          uri: lb://primeapi
+          predicates:
+            - Path=/engine/**
+          filters:
+            - AuthenticationFilter
+        - id: ms_sb_idassigner
+          uri: lb://idassigner
+          predicates:
+            - Path=/idassigner/**
+          filters:
+            - AuthenticationFilter
+        - id: ms_sb_resultsaggregator
+          uri: lb://resultsaggregator
+          predicates:
+            - Path=/ra/**
+          filters:
+            - AuthenticationFilter
+        - id: data_converter
+          uri: lb://dataConverter
+          predicates:
+            - Path=/dc/**
+          filters:
+            - AuthenticationFilter
+        - id: dictionary_management
+          uri: lb://dictionarymanagement
+          predicates:
+            - Path=/dm/**
+          filters:
+            - AuthenticationFilter
+        - id: auto_merge
+          uri: lb://automerge
+          predicates:
+            - Path=/automerge/**
+          filters:
+            - AuthenticationFilter
+        - id: request_builder
+          uri: lb://requestbuilder
+          predicates:
+            - Path=/rb/**
+          filters:
+            - AuthenticationFilter
+        - id: profile_service
+          uri: lb://profileservice
+          predicates:
+            - Path=/profileservice/**
+          filters:
+            - AuthenticationFilter
+        - id: clipprofileservice
+          uri: lb://clipprofileservice
+          predicates:
+            - Path=/clipprofileservice/**
+          filters:
+            - AuthenticationFilter
+        - id: prime360iccleaningApi
+          uri: lb://prime360iccleaningApi
+          predicates:
+            - Path=/icc/**
+          filters:
+            - AuthenticationFilter
+        - id: operations
+          uri: lb://operations
+          predicates:
+            - Path=/operations/**
+          filters:
+            - AuthenticationFilter
+        - id: masterservice
+          uri: lb://Master-Services-ws
+          predicates:
+            - Path=/masterservice/**
+          filters:
+            - AuthenticationFilter
+        - id: login
+          uri: lb://login
+          predicates:
+            - Path=/login/**
+        - id: main
+          uri: lb://main
+          predicates:
+            - Path=/**
+      httpclient:
+        max-header-size: 1048576
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
+          Access-Control-Allow-Credentials, RETAIN_FIRST
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:2679/eureka/
+server:
+  max-http-header-size: 1048576

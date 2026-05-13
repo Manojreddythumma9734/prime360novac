@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+	<springProperty scope="context" name="LOG_PATH"
+		source="commonPathForAllServices" />
+		<springProperty scope="microservice_Number" name="SERVICE_NUMBER"
+		source="microservice.number" />
+    <property name="LOG_NAME" value="primeApi" />
+    <property name="TRG_NAME" value="primeApiTrgProps" />
+     <property name="EXCEPTION_LOG" value="primeapiFlightRecorder" />
+     <property name="EVENT" value="primeapieventResponses" />
+	<appender name="CONSOLE"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</Pattern>
+		</layout>
+	</appender>
+
+	<appender name="EXCEPTION-FILE-ROLLING"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${EXCEPTION_LOG}.log</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${EXCEPTION_LOG}.%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<maxFileSize>5MB</maxFileSize>
+			<totalSizeCap>20GB</totalSizeCap>
+			<maxHistory>60</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="TRG-FILE-ROLLING"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${TRG_NAME}.html</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${TRG_NAME}.%d{yyyy-MM-dd}.%i.html
+			</fileNamePattern>
+			<maxFileSize>5MB</maxFileSize>
+			<totalSizeCap>20GB</totalSizeCap>
+			<maxHistory>60</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="ADMIN-FILE-ROLLING"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${LOG_NAME}.html</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${LOG_NAME}.%d{yyyy-MM-dd}.%i.html
+			</fileNamePattern>
+			<maxFileSize>5MB</maxFileSize>
+			<totalSizeCap>20GB</totalSizeCap>
+			<maxHistory>60</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+<appender name="EVENT-FILE-ROLLING"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${EVENT}.html</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/logs/PrimeApi_${SERVICE_NUMBER}/${EVENT}.%d{yyyy-MM-dd}.%i.html
+			</fileNamePattern>
+			<maxFileSize>5MB</maxFileSize>
+			<totalSizeCap>20GB</totalSizeCap>
+			<maxHistory>60</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+	<appender name="EXCEPTION"
+		class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="EXCEPTION-FILE-ROLLING" />
+		<queueSize>512</queueSize>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+	</appender>
+
+	<appender name="ADMIN"
+		class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="ADMIN-FILE-ROLLING" />
+		<queueSize>512</queueSize>
+	</appender>
+
+	<appender name="TRG"
+		class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="TRG-FILE-ROLLING" />
+		<queueSize>512</queueSize>
+	</appender>
+	<appender name="EVENT"
+		class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="EVENT-FILE-ROLLING" />
+		<queueSize>512</queueSize>
+	</appender>
+	
+	
+
+	<logger name="com.posidex.primeapi" level="error"
+		additivity="false">
+		<appender-ref ref="EXCEPTION" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+	<logger name="com.posidex.primeapi" level="info" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="ADMIN" />
+	</logger>
+	<logger name="com.posidex.core.prime360iccleaning" level="info" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="ADMIN" />
+	    </logger>
+	<logger name="posidex.prime360.engine.hashing.PropertiesLogger"
+		level="info" additivity="false">
+		<appender-ref ref="TRG" />
+	</logger>
+	<logger name="posidex.prime360.engine.hashing.EventMessageLogger"
+		level="info">
+		<appender-ref ref="EVENT" />
+	</logger>
+	<logger name="posidex"
+		level="error" additivity="false">
+		<appender-ref ref="EXCEPTION" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+		<logger name="com.posidex"
+		level="error" additivity="false">
+		<appender-ref ref="EXCEPTION" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+		<logger name="com.psx"
+		level="error" additivity="false">
+		<appender-ref ref="EXCEPTION" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+	<logger name="posidex"
+		level="info" additivity="false">
+		<appender-ref ref="ADMIN" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+		<logger name="com.posidex"
+		level="info" additivity="false">
+		<appender-ref ref="ADMIN" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+		<logger name="com.psx"
+		level="info" additivity="false">
+		<appender-ref ref="ADMIN" />
+		<appender-ref ref="CONSOLE" />
+
+	</logger>
+	<root level="error">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="EXCEPTION" />
+	</root>
+</configuration>

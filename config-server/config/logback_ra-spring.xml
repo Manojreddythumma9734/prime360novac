@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+     <springProperty scope="context" name="LOG_PATH" source="commonPathForAllServices"/>
+    <property name="LOG_NAME" value="ra" />
+    <springProperty scope="microservice_Number" name="SERVICE_NUMBER"
+		source="microservice.number" />
+    <property name="EXCEPTION_LOG" value="raFlightRecorder" />
+    <property name="QUERYSTATS" value="queryStats" />
+
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+        </layout>
+    </appender>
+
+    <appender name="EXCEPTION-FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/logs/RA_${SERVICE_NUMBER}/${EXCEPTION_LOG}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/logs/RA_${SERVICE_NUMBER}/${EXCEPTION_LOG}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <totalSizeCap>20GB</totalSizeCap>
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+     <appender name="QUERYSTATS-FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/logs/RA_${SERVICE_NUMBER}/${QUERYSTATS}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/logs/RA_${SERVICE_NUMBER}/${QUERYSTATS}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <totalSizeCap>20GB</totalSizeCap>
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <appender name="ADMIN-FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/logs/RA_${SERVICE_NUMBER}/${LOG_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/logs/RA_${SERVICE_NUMBER}/${LOG_NAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <totalSizeCap>20GB</totalSizeCap>
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="EXCEPTION" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="EXCEPTION-FILE-ROLLING" />
+        <queueSize>512</queueSize>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+    
+        <appender name="ADMIN" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="ADMIN-FILE-ROLLING" />
+        <queueSize>512</queueSize>
+    </appender>
+    
+     <appender name="QUERY" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="QUERYSTATS-FILE-ROLLING" />
+        <queueSize>512</queueSize>
+    </appender>
+
+    <logger name="com.psx" level="error" additivity ="false">
+        <appender-ref ref="EXCEPTION"/>
+         <appender-ref ref="CONSOLE" />        
+    </logger>
+    <logger name="com.psx.core.prime360admin.corecleaning.QueryStatsLogger" level="info" additivity ="false">
+        <appender-ref ref="QUERY"/>
+         <appender-ref ref="CONSOLE" />       
+    </logger>
+   <logger name="com.psx" level="info" additivity ="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ADMIN"/>
+    </logger>
+    <root level="error">
+        <appender-ref ref="EXCEPTION"/>
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>
